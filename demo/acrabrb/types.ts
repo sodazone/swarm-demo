@@ -33,9 +33,4 @@ export type Network = {
 	workers: Worker[];
 	t: number; // Byzantine peers
 	d: number; // Network Adversarials
-	posted?: {
-		response?: Buffer;
-		message: Message;
-		signatures: Sig[];
-	}; // This simulates the ledger post, i.e. not in swarm P2P
-};
+}
