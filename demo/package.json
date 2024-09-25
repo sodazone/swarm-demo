@@ -1,0 +1,17 @@
+{
+	"name": "swarm-demo",
+	"module": "index.ts",
+	"type": "module",
+	"devDependencies": {
+		"@biomejs/biome": "1.9.2",
+		"bun-types": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"@logtape/logtape": "^0.6.0",
+		"@noble/curves": "^1.6.0",
+		"viem": "^2.21.10"
+	}
+}
