@@ -253,7 +253,6 @@ export class Peer {
 	}
 
 	private signMessage(message: Message) {
-		// TODO: re-entrancy?
 		const sig: Sig = {
 			peerId: this.id,
 			signature: sign(this.hashStoredResponse(message), this.privKey),
