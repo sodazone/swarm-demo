@@ -18,12 +18,12 @@ enum RequestStatus {
 /// @title Swarm Contract
 contract Swarm {
     address public owner;
+    uint256 public sn = 0;
 
     address[] public peerPubKeys;
     mapping(address => uint8) public peersMap;
 
     mapping(bytes32 => RequestStatus) public requests;
-    uint256 public sn = 0;
 
     event NewRequest(
         uint256 indexed sn,
