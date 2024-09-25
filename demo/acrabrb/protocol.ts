@@ -1,8 +1,6 @@
 // ACRABRB
 // Authenticated Commit-Reveal over
 // Asynchronous Byzantine Reliable Broadcast
-// with a Message Adversary
-// https://arxiv.org/pdf/2205.09992
 
 import { getLogger } from "@logtape/logtape";
 import { type Hex, toHex } from "viem";
