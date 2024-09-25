@@ -8,7 +8,7 @@ struct RequestData {
 }
 
 enum RequestStatus {
-    _UNDEFINED,
+    __,
     PENDING,
     FULFILLED,
     SUCCESS,
@@ -18,7 +18,6 @@ enum RequestStatus {
 /// @title Swarm Contract
 contract Swarm {
     address public owner;
-    address public pendingOwner;
 
     address[] public peerPubKeys;
     mapping(address => uint8) public peersMap;
@@ -30,11 +29,6 @@ contract Swarm {
         uint256 indexed sn,
         address callbackContract,
         bytes payload
-    );
-    event OwnershipTransferInitiated(address indexed newOwner);
-    event OwnershipTransferred(
-        address indexed oldOwner,
-        address indexed newOwner
     );
 
     modifier onlyOwner() {
@@ -49,19 +43,6 @@ contract Swarm {
 
     constructor() {
         owner = msg.sender;
-    }
-
-    function changeOwner(address _newOwner) public onlyOwner {
-        require(_newOwner != address(0), "Invalid address");
-        pendingOwner = _newOwner;
-        emit OwnershipTransferInitiated(_newOwner);
-    }
-
-    function confirmOwnerChange() public {
-        require(msg.sender == pendingOwner, "Not pending owner");
-        emit OwnershipTransferred(owner, pendingOwner);
-        owner = pendingOwner;
-        pendingOwner = address(0);
     }
 
     function isPeerRegistered(address _address) public view returns (bool) {
