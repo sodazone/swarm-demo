@@ -148,6 +148,7 @@ async function handleFulfillment({
 	});
 
 	logger.info`RECEIPT ${txReceipt.status} ${txHash}`;
+	logger.info`GAS USED ${txReceipt.gasUsed}`;
 
 	process.exit(0);
 }
