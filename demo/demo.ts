@@ -6,6 +6,9 @@ import {
 } from "@logtape/logtape";
 import { type Hex, numberToHex, parseEther, toHex } from "viem";
 
+import { publicClient, walletClient } from "./evm/client";
+import { inititalizeSwarm } from "./evm/swarm";
+import { toHexEthAddress } from "./evm/utils";
 import type {
 	BundleMessage,
 	Fulfillment,
@@ -15,10 +18,7 @@ import type {
 	ParentWorkerMessage,
 	PeerInfo,
 	Sig,
-} from "./acrabrb/types";
-import { publicClient, walletClient } from "./eth/client";
-import { inititalizeSwarm } from "./eth/swarm";
-import { toHexEthAddress } from "./eth/utils";
+} from "./p2p/types";
 
 await configure({
 	sinks: {
@@ -41,7 +41,7 @@ const logger = getLogger(["demo"]);
 const WARMUP = 1000;
 
 export function createPeerWorker(id: number, byzantine: boolean) {
-	const worker = new Worker("./acrabrb/worker.ts");
+	const worker = new Worker("./p2p/worker.ts");
 	worker.postMessage({
 		type: "new_peer",
 		value: { id, byzantine },

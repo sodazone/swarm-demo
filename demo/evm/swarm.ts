@@ -3,7 +3,7 @@ import { type Hex, type Log, getContract } from "viem";
 
 import { account, publicClient, walletClient } from "./client";
 
-import type { Network, RequestData, RequestMessage } from "../acrabrb/types";
+import type { Network, RequestData, RequestMessage } from "../p2p/types";
 import { abi, bytecode } from "./Swarm.json";
 
 const logger = getLogger(["demo"]);
