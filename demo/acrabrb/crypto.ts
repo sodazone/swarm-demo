@@ -36,7 +36,13 @@ export function encodeRequestData(requestData: RequestData) {
 				],
 			},
 		],
-		[[requestData.sn, requestData.callbackContract, requestData.payload]],
+		[
+			[
+				requestData.sequenceNumber,
+				requestData.callbackContract,
+				requestData.payload,
+			],
+		],
 	);
 }
 

@@ -7,10 +7,13 @@ import {
 import { type Hex, numberToHex, parseEther, toHex } from "viem";
 
 import type {
-	Bundle,
+	BundleMessage,
+	Fulfillment,
 	Network,
+	NetworkInfoMessage,
+	NewPeerMessage,
+	ParentWorkerMessage,
 	PeerInfo,
-	RequestData,
 	Sig,
 } from "./acrabrb/types";
 import { publicClient, walletClient } from "./eth/client";
@@ -39,7 +42,10 @@ const WARMUP = 1000;
 
 export function createPeerWorker(id: number, byzantine: boolean) {
 	const worker = new Worker("./acrabrb/worker.ts");
-	worker.postMessage({ id, byzantine });
+	worker.postMessage({
+		type: "new_peer",
+		value: { id, byzantine },
+	} as NewPeerMessage);
 	return worker;
 }
 
@@ -79,13 +85,14 @@ let start: number;
 
 // dirty lock
 let f = false;
+let i = 0;
 
-async function handleFulfillment(
-	who: number,
-	bundle: Bundle,
-	response: Buffer,
-	requestData: RequestData,
-) {
+async function handleFulfillment({
+	who,
+	bundle,
+	responseBuffer,
+	requestData,
+}: Fulfillment) {
 	if (f) {
 		return;
 	}
@@ -109,9 +116,13 @@ async function handleFulfillment(
 		address: fulfiller,
 	});
 
-	const responsePayload = toHex(response);
+	const responsePayload = toHex(responseBuffer);
 	const args = [
-		[requestData.sn, requestData.callbackContract, requestData.payload],
+		[
+			requestData.sequenceNumber,
+			requestData.callbackContract,
+			requestData.payload,
+		],
 		responsePayload,
 		rs,
 		ss,
@@ -137,57 +148,76 @@ async function handleFulfillment(
 	});
 
 	logger.info`RECEIPT ${txReceipt.status} ${txHash}`;
+
 	process.exit(0);
 }
 
 for (const w of network.workers) {
-	w.onmessage = (event) => {
-		const data = event.data;
-		if (data.peerInfo) {
-			network.peers[data.peerInfo.id] = data.peerInfo;
-		} else if (data.from && data.bundle) {
-			for (const p of network.peers) {
-				if (
-					p.id !== data.from &&
-					!data.bundle.sigs.some((s: Sig) => s.peerId === p.id)
-				) {
-					network.workers[p.id].postMessage(data.bundle);
+	w.onmessage = (event: MessageEvent<ParentWorkerMessage>) => {
+		const wm = event.data;
+
+		switch (wm.type) {
+			case "peer_info": {
+				network.peers[wm.value.id] = wm.value;
+				i++;
+				break;
+			}
+			case "broadcast": {
+				const { bundle, from } = wm.value;
+				const { sigs } = bundle;
+
+				for (const p of network.peers) {
+					if (p.id !== from && !sigs.some((s: Sig) => s.peerId === p.id)) {
+						network.workers[p.id].postMessage({
+							type: "bundle",
+							value: bundle,
+						} as BundleMessage);
+					}
 				}
+				break;
 			}
-		} else if (data.who) {
-			const millis = Date.now() - start;
+			case "consensus": {
+				const { bundle } = wm.value;
+				const millis = Date.now() - start;
 
-			logger.info`QUORUM ${data.bundle.sigs.length} peers in ${millis}ms`;
+				logger.info`QUORUM ${bundle.sigs.length} peers in ${millis}ms`;
 
-			for (const w of network.workers) {
-				w.terminate();
-			}
-			try {
-				handleFulfillment(data.who, data.bundle, data.response, data.request);
-			} catch (error) {
-				console.error(error);
+				for (const w of network.workers) {
+					w.terminate();
+				}
+				try {
+					handleFulfillment(wm.value);
+				} catch (error) {
+					console.error(error);
+				}
+				break;
 			}
 		}
 	};
 }
 
 setTimeout(() => {
-	if (network.peers.some((p) => p === undefined)) {
-		throw new Error("Peer infos not properly propagated");
+	if (i < network.workers.length) {
+		console.error("Peer infos not properly propagated", network.peers);
+		process.exit(1);
 	}
 
 	for (const w of network.workers) {
 		w.postMessage({
-			peerInfos: network.peers,
-			t: network.t,
-		});
+			type: "network_info",
+			value: {
+				peers: network.peers,
+				t: network.t,
+			},
+		} as NetworkInfoMessage);
 	}
 }, WARMUP);
 
 setTimeout(async () => {
 	for (const peer of network.peers) {
 		if (peer === undefined) {
-			throw new Error("Network not properly initialized");
+			console.error("Network not properly initialized", network);
+			process.exit(1);
 		}
 
 		const address = toHexEthAddress(peer.pubKey);

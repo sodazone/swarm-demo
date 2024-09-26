@@ -1,9 +1,9 @@
 import { getLogger } from "@logtape/logtape";
-import { type Hex, type Log, getContract, toHex } from "viem";
+import { type Hex, type Log, getContract } from "viem";
 
 import { account, publicClient, walletClient } from "./client";
 
-import type { Network, RequestData } from "../acrabrb/types";
+import type { Network, RequestData, RequestMessage } from "../acrabrb/types";
 import { abi, bytecode } from "./Swarm.json";
 
 const logger = getLogger(["demo"]);
@@ -16,7 +16,7 @@ export async function inititalizeSwarm(network: Network) {
 		onRequest: (reqs) => {
 			for (const req of reqs) {
 				for (const worker of network.workers) {
-					worker.postMessage(req);
+					worker.postMessage({ type: "request", value: req } as RequestMessage);
 				}
 			}
 		},

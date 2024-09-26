@@ -45,17 +45,15 @@ export class Peer {
 	onRequest(requestData: RequestData) {
 		const delay = Math.random() * 100;
 
-		logger.info("[{id}] RQ data={data} delay={delay}ms", {
-			id: this.id,
-			data: requestData,
-			delay,
-		});
+		/*console.debug(
+			`[${this.id}] RQ sequence=${requestData.sequenceNumber} delay=${delay}ms`,
+		);*/
 
 		setTimeout(() => {
 			const payload = this.byzantine
 				? Buffer.from("FAULTY MESSAGE")
 				: Buffer.from("CORRECT MESSAGE");
-			const seq = Number(requestData.sn);
+			const seq = Number(requestData.sequenceNumber);
 			this.responses.set(seq, payload);
 			this.requests.set(seq, requestData);
 
@@ -215,30 +213,21 @@ export class Peer {
 
 	// Collects valid signatures from a bundle and stores them
 	private collectSignatures(bundle: Bundle): void {
-		try {
-			for (const { pubKey } of this.peerInfos) {
-				for (const sig of bundle.sigs) {
-					const existingSig = this.signatures.find(
-						(s) =>
-							s.signature.r === sig.signature.r &&
-							s.signature.s === sig.signature.s,
-					);
+		for (const { pubKey } of this.peerInfos) {
+			for (const sig of bundle.sigs) {
+				const existingSig = this.signatures.find(
+					(s) =>
+						s.signature.r === sig.signature.r &&
+						s.signature.s === sig.signature.s,
+				);
 
-					if (
-						!existingSig &&
-						verify(
-							sig.signature,
-							this.hashStoredResponse(bundle.message),
-							pubKey,
-						)
-					) {
-						this.storeSignature(sig);
-					}
+				if (
+					!existingSig &&
+					verify(sig.signature, this.hashStoredResponse(bundle.message), pubKey)
+				) {
+					this.storeSignature(sig);
 				}
 			}
-		} catch (error) {
-			console.error(this.id, error);
-			throw error;
 		}
 	}
 
