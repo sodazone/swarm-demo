@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 struct RequestData {
-    uint256 sn;
+    uint256 sequenceNumber;
     address callbackContract;
     bytes payload;
 }
@@ -18,15 +18,16 @@ enum RequestStatus {
 /// @title Swarm Contract
 contract Swarm {
     address public owner;
-    uint256 public sn = 0;
+    uint256 public sequenceNumber = 0;
 
+    // NOTE use address type for demo convenience
     address[] public peerPubKeys;
     mapping(address => uint8) public peersMap;
 
     mapping(bytes32 => RequestStatus) public requests;
 
     event NewRequest(
-        uint256 indexed sn,
+        uint256 indexed sequenceNumber,
         address callbackContract,
         bytes payload
     );
@@ -83,11 +84,11 @@ contract Swarm {
         require(_callbackContract != address(0), "Invalid callback contract");
 
         unchecked {
-            sn++;
+            sequenceNumber++;
         }
         
         RequestData memory requestData = RequestData({
-            sn: sn,
+            sequenceNumber: sequenceNumber,
             callbackContract: _callbackContract,
             payload: _payload
         });
@@ -95,8 +96,8 @@ contract Swarm {
         bytes32 requestHash = keccak256(abi.encode(requestData));
         requests[requestHash] = RequestStatus.PENDING;
 
-        emit NewRequest(sn, _callbackContract, _payload);
-        return sn;
+        emit NewRequest(sequenceNumber, _callbackContract, _payload);
+        return sequenceNumber;
     }
 
     function postResponse(
