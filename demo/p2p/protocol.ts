@@ -1,6 +1,4 @@
-// ACRABRB
-// Authenticated Commit-Reveal over
-// Asynchronous Byzantine Reliable Broadcast
+// Byzantine Opaque Agreement
 
 import { getLogger } from "@logtape/logtape";
 import { type Hex, toHex } from "viem";
