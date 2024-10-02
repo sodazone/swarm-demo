@@ -3,6 +3,9 @@ pragma solidity ^0.8.19;
 
 struct RequestData {
     uint256 sequenceNumber;
+    // NOTE this is an example for on-chain reponse delivery,
+    // in the off-chain case a receipt of
+    // the requester would presented for on-chain fulfillment
     address callbackContract;
     bytes payload;
 }
